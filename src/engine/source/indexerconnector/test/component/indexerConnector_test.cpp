@@ -250,7 +250,7 @@ TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithSslCredentials)
 {
     IndexerConnectorOptions indexerConfig {.name = INDEXER_NAME,
                                            .hosts = {A_ADDRESS},
-                                           .sslOptions = {.cacert = {"/etc/filebeat/certs/root-ca.pem"},
+                                           .sslOptions = {.cacert = "/etc/filebeat/certs/root-ca.pem",
                                                           .cert = "/etc/filebeat/certs/filebeat.pem",
                                                           .key = "/etc/filebeat/certs/filebeat-key.pem"},
                                            .timeout = INDEXER_TIMEOUT};
@@ -266,11 +266,10 @@ TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithSslCredentials)
  * the test coverage.
  *
  */
-TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithCertsArray)
+TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithCert)
 {
     // Setup for the test
-    const std::string certFileOne = "./root-ca-one.pem";
-    const std::string certFileTwo = "./root-ca-two.pem";
+    const std::string certFileOne = "./root-ca.pem";
     const std::string mergedCertFile = "/var/lib/wazuh-server/tmp/root-ca-merged.pem";
 
     // Create the first certificate file
@@ -278,15 +277,10 @@ TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithCertsArray)
     outputFile << "CERT-ONE\n";
     outputFile.close();
 
-    // Create the second certificate file
-    std::ofstream outputFileSecond(certFileTwo);
-    outputFileSecond << "CERT-TWO\n";
-    outputFileSecond.close();
-
     // Indexer configuration with SSL options
     IndexerConnectorOptions indexerConfig {.name = INDEXER_NAME,
                                            .hosts = {A_ADDRESS},
-                                           .sslOptions = {.cacert = {certFileOne, certFileTwo},
+                                           .sslOptions = {.cacert = certFileOne,
                                                           .cert = "/etc/filebeat/certs/filebeat.pem",
                                                           .key = "/etc/filebeat/certs/filebeat-key.pem"},
                                            .timeout = INDEXER_TIMEOUT};
@@ -299,11 +293,10 @@ TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithCertsArray)
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
 
-    ASSERT_EQ(content, "CERT-ONE\nCERT-TWO\n");
+    ASSERT_EQ(content, "CERT-ONE\n");
 
     // Clean up files
     std::filesystem::remove(certFileOne);
-    std::filesystem::remove(certFileTwo);
 }
 
 /**
@@ -313,19 +306,18 @@ TEST_F(IndexerConnectorTest, DISABLED_ConnectionWithCertsArray)
  * the test coverage.
  *
  */
-TEST_F(IndexerConnectorTest, ConnectionWithCertsArrayNoFiles)
+TEST_F(IndexerConnectorTest, ConnectionWithCertNoFile)
 {
-    IndexerConnectorOptions indexerConfig {
-        .name = INDEXER_NAME,
-        .hosts = {A_ADDRESS},
-        .sslOptions = {.cacert = {"/etc/filebeat/certs/root-ca.pem", "/etc/filebeat/certs/root-ca-two.pem"},
-                       .cert = "/etc/filebeat/certs/filebeat.pem",
-                       .key = "/etc/filebeat/certs/filebeat-key.pem"},
-        .timeout = INDEXER_TIMEOUT};
+    IndexerConnectorOptions indexerConfig {.name = INDEXER_NAME,
+                                           .hosts = {A_ADDRESS},
+                                           .sslOptions = {.cacert = "/etc/filebeat/certs/root-ca.pem",
+                                                          .cert = "/etc/filebeat/certs/filebeat.pem",
+                                                          .key = "/etc/filebeat/certs/filebeat-key.pem"},
+                                           .timeout = INDEXER_TIMEOUT};
 
     // Create connector and wait until the connection is established.
     // Throw is expected if the certs are not found.
-    EXPECT_THROW(auto indexerConnector {IndexerConnector(indexerConfig)}, std::runtime_error);
+    EXPECT_NO_THROW(auto indexerConnector {IndexerConnector(indexerConfig)});
 }
 
 /**
