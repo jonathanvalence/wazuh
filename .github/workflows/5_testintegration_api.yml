@@ -78,14 +78,24 @@ jobs:
       # Fetch wazuh server package
       - name: Fetch wazuh-server package 
         uses: actions/download-artifact@v4
+        id: fetch
         with:
           name: ${{env.PACKAGE_NAME}}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.package-generation.outputs.run-id }}
 
       # Install wazuh server package
+      - name: Check fetch
+        run: echo ${{ steps.fetch.outputs.download-path }}
+
+      # Install wazuh server package
+      - name: Check fetch output
+        run: ls -la $GITHUB_WORKSPACE
+
+
+      # Install wazuh server package
       - name: Install wazuh-server 
-        run: sudo apt install ${PACKAGE_NAME}
+        run: sudo apt install ${GITHUB_WORKSPACE}/${PACKAGE_NAME}
 
       # Download and install integration tests framework.
       - name: Download and install integration tests framework
